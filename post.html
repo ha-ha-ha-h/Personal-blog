@@ -3,7 +3,6 @@
 <head>
   <title>我的博客-文章详情</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
   <script>
     tailwind.config = {
@@ -34,9 +33,9 @@
     <div class="container mx-auto px-4 py-4 flex justify-between items-center">
       <h1 class="text-2xl font-bold">我的博客</h1>
       <nav>
-        <a href="/index.html" class="mr-6"><i class="fa fa-home mr-1"></i>首页</a>
-        <a href="/blog.html" class="mr-6"><i class="fa fa-list mr-1"></i>所有文章</a>
-        <a href="/about.html" class="mr-6"><i class="fa fa-user mr-1"></i>关于我</a>
+        <a href="index.html" class="mr-6"><i class="fa fa-home mr-1"></i>首页</a>
+        <a href="blog.html" class="mr-6"><i class="fa fa-list mr-1"></i>所有文章</a>
+        <a href="about.html" class="mr-6"><i class="fa fa-user mr-1"></i>关于我</a>
       </nav>
     </div>
   </header>
@@ -45,14 +44,46 @@
   <section class="py-12">
     <div class="container mx-auto px-4">
       <div id="post-detail" class="max-w-4xl mx-auto">
-        <!-- 文章内容由JS动态渲染 -->
+        <!-- 写死的文章内容 -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+          <img src="https://picsum.photos/1200/600" class="w-full h-64 object-cover">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-gray-600 text-sm">2025-11-10</span>
+              <div class="flex items-center">
+                <img src="https://picsum.photos/100/100" class="w-10 h-10 rounded-full mr-2">
+                <span class="font-medium">博主123</span>
+              </div>
+            </div>
+            <h1 class="text-3xl font-bold mb-4">我的第一篇技术博客</h1>
+            <div class="prose-custom">
+              <p class="text-gray-600 mb-6">热爱技术的博客作者</p>
+              <p>这是我的第一篇博客，记录我的技术成长之路...</p>
+              <p>在这篇文章中，我将分享如何从零开始搭建个人博客，包括前端页面、后端服务和数据库设计。</p>
+              <p>首先，我们选择了 Tailwind CSS 作为样式框架，它让样式开发变得高效且灵活...</p>
+              <p>其次，使用 Supabase 作为后端服务，它提供了开箱即用的数据库、认证和存储功能...</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- 评论区 -->
       <div id="comments-section" class="mt-12">
         <h3 class="text-xl font-bold mb-6">评论区</h3>
         <div id="comments-list" class="mb-6">
-          <!-- 评论列表由JS动态渲染 -->
+          <!-- 写死的评论 -->
+          <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+            <div class="flex items-start">
+              <img src="https://picsum.photos/100/100" class="w-12 h-12 rounded-full mr-4">
+              <div>
+                <div class="flex items-center mb-2">
+                  <span class="font-medium">访客123</span>
+                  <span class="text-gray-500 text-sm ml-2">2025-11-10 16:00</span>
+                </div>
+                <p>文章很有帮助，期待后续更新！</p>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-md">
           <h4 class="text-lg font-medium mb-4">添加评论</h4>
@@ -64,109 +95,5 @@
       </div>
     </div>
   </section>
-
-  <script>
-    // 初始化Supabase
-    const supabase = supabase.createClient(
-      'https://yqqnvejkxaumpgfmbgvi.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxcW52ZWpreGF1bXBnZm1iZ3ZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3Mzk4NjcsImV4cCI6MjA3ODMxNTg2N30.3P4g-P1fVZlNL-yAd9zm7ogPiaiOAIHxTF-VStT8ZHk'
-    );
-
-    // 作者ID（已替换）
-    const authorId = 'df514ef3-d459-4d4e-9a66-2f3f8d5612a0';
-    // 获取URL中的文章ID
-    const urlParams = new URLSearchParams(window.location.search);
-    const postId = urlParams.get('id');
-
-    // 获取文章详情
-    async function getPostDetail() {
-      const { data: post, error: postError } = await supabase
-        .from('posts')
-        .select('id, title, content, cover_image, updated_at, author_id, profiles(username, bio, avatar_url)')
-        .eq('id', postId)
-        .single();
-
-      if (postError) {
-        console.error('获取文章失败:', postError);
-        document.getElementById('post-detail').innerHTML = '<p class="text-red-500">文章不存在或已删除</p>';
-        return;
-      }
-
-      document.getElementById('post-detail').innerHTML = `
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-          <img src="${post.cover_image || 'https://picsum.photos/1200/600'}" class="w-full h-64 object-cover">
-          <div class="p-6">
-            <div class="flex justify-between items-center mb-4">
-              <span class="text-gray-600 text-sm">${new Date(post.updated_at).toLocaleDateString()}</span>
-              <div class="flex items-center">
-                <img src="${post.profiles.avatar_url || 'https://picsum.photos/100/100'}" class="w-10 h-10 rounded-full mr-2">
-                <span class="font-medium">${post.profiles.username}</span>
-              </div>
-            </div>
-            <h1 class="text-3xl font-bold mb-4">${post.title}</h1>
-            <div class="prose-custom">${post.profiles.bio ? `<p class="text-gray-600 mb-6">${post.profiles.bio}</p>` : ''}${post.content}</div>
-          </div>
-        </div>
-      `;
-
-      // 获取评论
-      getComments();
-    }
-
-    // 获取评论
-    async function getComments() {
-      const { data: comments, error: commentError } = await supabase
-        .from('comments')
-        .select('id, content, created_at, author_id, profiles(username, avatar_url)')
-        .eq('post_id', postId)
-        .order('created_at', { ascending: true });
-
-      if (commentError) {
-        console.error('获取评论失败:', commentError);
-        return;
-      }
-
-      const commentsList = document.getElementById('comments-list');
-      commentsList.innerHTML = comments.length > 0 ? comments.map(comment => `
-        <div class="bg-white rounded-lg shadow-md p-4 mb-4">
-          <div class="flex items-start">
-            <img src="${comment.profiles.avatar_url || 'https://picsum.photos/100/100'}" class="w-12 h-12 rounded-full mr-4">
-            <div>
-              <div class="flex items-center mb-2">
-                <span class="font-medium">${comment.profiles.username}</span>
-                <span class="text-gray-500 text-sm ml-2">${new Date(comment.created_at).toLocaleString()}</span>
-              </div>
-              <p>${comment.content}</p>
-            </div>
-          </div>
-        </div>
-      `).join('') : '<p class="text-gray-500">暂无评论，快来抢沙发~</p>';
-    }
-
-    // 发布评论
-    document.getElementById('submit-comment').addEventListener('click', async () => {
-      const content = document.getElementById('comment-content').value.trim();
-      if (!content) return;
-
-      const { data, error } = await supabase
-        .from('comments')
-        .insert([{
-          post_id: postId,
-          author_id: authorId,
-          content: content
-        }]);
-
-      if (error) {
-        console.error('发布评论失败:', error);
-        alert('评论发布失败，请重试');
-        return;
-      }
-
-      document.getElementById('comment-content').value = '';
-      getComments();
-    });
-
-    getPostDetail();
-  </script>
 </body>
 </html>
