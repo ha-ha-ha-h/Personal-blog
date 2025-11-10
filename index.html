@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>我的博客-首页</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6',
+            dark: '#1E293B',
+          },
+        },
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .blog-card {
+        @apply bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- 头部导航 -->
+  <header class="bg-dark text-white shadow-md">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">我的博客</h1>
+      <nav>
+        <a href="/index.html" class="mr-6"><i class="fa fa-home mr-1"></i>首页</a>
+        <a href="/blog.html" class="mr-6"><i class="fa fa-list mr-1"></i>所有文章</a>
+        <a href="/about.html" class="mr-6"><i class="fa fa-user mr-1"></i>关于我</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 轮播/推荐区域 -->
+  <section class="bg-gradient-to-r from-primary to-blue-600 text-white py-12">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-bold mb-4">欢迎来到我的技术博客</h2>
+      <p class="text-lg mb-8">分享编程心得、技术干货与成长故事</p>
+      <a href="/blog.html" class="bg-white text-primary px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors">
+        浏览文章 <i class="fa fa-arrow-right ml-2"></i>
+      </a>
+    </div>
+  </section>
+
+  <!-- 最新文章 -->
+  <section class="py-12">
+    <div class="container mx-auto px-4">
+      <h2 class="text-2xl font-bold mb-8 text-center">最新文章</h2>
+      <div id="latest-posts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- 文章卡片由JS动态渲染 -->
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // 初始化Supabase
+    const supabase = supabase.createClient(
+      'https://yqqnvejkxaumpgfmbgvi.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxcW52ZWpreGF1bXBnZm1iZ3ZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3Mzk4NjcsImV4cCI6MjA3ODMxNTg2N30.3P4g-P1fVZlNL-yAd9zm7ogPiaiOAIHxTF-VStT8ZHk'
+    );
+
+    // 作者ID（已替换）
+    const authorId = 'df514ef3-d459-4d4e-9a66-2f3f8d5612a0';
+
+    // 获取最新文章
+    async function getLatestPosts() {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('id, title, cover_image, updated_at, author_id, profiles(username)')
+        .order('updated_at', { ascending: false })
+        .limit(6)
+        .eq('author_id', authorId);
+
+      if (error) {
+        console.error('获取文章失败:', error);
+        return;
+      }
+
+      const postsContainer = document.getElementById('latest-posts');
+      postsContainer.innerHTML = data.map(post => `
+        <div class="blog-card">
+          <img src="${post.cover_image || 'https://picsum.photos/600/400'}" class="w-full h-48 object-cover rounded-t-lg">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-gray-600 text-sm">${new Date(post.updated_at).toLocaleDateString()}</span>
+              <span class="text-primary font-medium">${post.profiles.username}</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3">${post.title}</h3>
+            <a href="/post.html?id=${post.id}" class="text-primary font-medium flex items-center">
+              阅读全文 <i class="fa fa-angle-right ml-2"></i>
+            </a>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    getLatestPosts();
+  </script>
+</body>
+</html>

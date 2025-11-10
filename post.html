@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>我的博客-文章详情</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6',
+            dark: '#1E293B',
+          },
+        },
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .prose-custom {
+        @apply max-w-none;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- 头部导航 -->
+  <header class="bg-dark text-white shadow-md">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">我的博客</h1>
+      <nav>
+        <a href="/index.html" class="mr-6"><i class="fa fa-home mr-1"></i>首页</a>
+        <a href="/blog.html" class="mr-6"><i class="fa fa-list mr-1"></i>所有文章</a>
+        <a href="/about.html" class="mr-6"><i class="fa fa-user mr-1"></i>关于我</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 文章详情 -->
+  <section class="py-12">
+    <div class="container mx-auto px-4">
+      <div id="post-detail" class="max-w-4xl mx-auto">
+        <!-- 文章内容由JS动态渲染 -->
+      </div>
+
+      <!-- 评论区 -->
+      <div id="comments-section" class="mt-12">
+        <h3 class="text-xl font-bold mb-6">评论区</h3>
+        <div id="comments-list" class="mb-6">
+          <!-- 评论列表由JS动态渲染 -->
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h4 class="text-lg font-medium mb-4">添加评论</h4>
+          <textarea id="comment-content" class="w-full p-3 border border-gray-300 rounded-lg mb-4" rows="3" placeholder="分享你的想法..."></textarea>
+          <button id="submit-comment" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
+            发布评论
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // 初始化Supabase
+    const supabase = supabase.createClient(
+      'https://yqqnvejkxaumpgfmbgvi.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxcW52ZWpreGF1bXBnZm1iZ3ZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3Mzk4NjcsImV4cCI6MjA3ODMxNTg2N30.3P4g-P1fVZlNL-yAd9zm7ogPiaiOAIHxTF-VStT8ZHk'
+    );
+
+    // 作者ID（已替换）
+    const authorId = 'df514ef3-d459-4d4e-9a66-2f3f8d5612a0';
+    // 获取URL中的文章ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('id');
+
+    // 获取文章详情
+    async function getPostDetail() {
+      const { data: post, error: postError } = await supabase
+        .from('posts')
+        .select('id, title, content, cover_image, updated_at, author_id, profiles(username, bio, avatar_url)')
+        .eq('id', postId)
+        .single();
+
+      if (postError) {
+        console.error('获取文章失败:', postError);
+        document.getElementById('post-detail').innerHTML = '<p class="text-red-500">文章不存在或已删除</p>';
+        return;
+      }
+
+      document.getElementById('post-detail').innerHTML = `
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+          <img src="${post.cover_image || 'https://picsum.photos/1200/600'}" class="w-full h-64 object-cover">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-gray-600 text-sm">${new Date(post.updated_at).toLocaleDateString()}</span>
+              <div class="flex items-center">
+                <img src="${post.profiles.avatar_url || 'https://picsum.photos/100/100'}" class="w-10 h-10 rounded-full mr-2">
+                <span class="font-medium">${post.profiles.username}</span>
+              </div>
+            </div>
+            <h1 class="text-3xl font-bold mb-4">${post.title}</h1>
+            <div class="prose-custom">${post.profiles.bio ? `<p class="text-gray-600 mb-6">${post.profiles.bio}</p>` : ''}${post.content}</div>
+          </div>
+        </div>
+      `;
+
+      // 获取评论
+      getComments();
+    }
+
+    // 获取评论
+    async function getComments() {
+      const { data: comments, error: commentError } = await supabase
+        .from('comments')
+        .select('id, content, created_at, author_id, profiles(username, avatar_url)')
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true });
+
+      if (commentError) {
+        console.error('获取评论失败:', commentError);
+        return;
+      }
+
+      const commentsList = document.getElementById('comments-list');
+      commentsList.innerHTML = comments.length > 0 ? comments.map(comment => `
+        <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+          <div class="flex items-start">
+            <img src="${comment.profiles.avatar_url || 'https://picsum.photos/100/100'}" class="w-12 h-12 rounded-full mr-4">
+            <div>
+              <div class="flex items-center mb-2">
+                <span class="font-medium">${comment.profiles.username}</span>
+                <span class="text-gray-500 text-sm ml-2">${new Date(comment.created_at).toLocaleString()}</span>
+              </div>
+              <p>${comment.content}</p>
+            </div>
+          </div>
+        </div>
+      `).join('') : '<p class="text-gray-500">暂无评论，快来抢沙发~</p>';
+    }
+
+    // 发布评论
+    document.getElementById('submit-comment').addEventListener('click', async () => {
+      const content = document.getElementById('comment-content').value.trim();
+      if (!content) return;
+
+      const { data, error } = await supabase
+        .from('comments')
+        .insert([{
+          post_id: postId,
+          author_id: authorId,
+          content: content
+        }]);
+
+      if (error) {
+        console.error('发布评论失败:', error);
+        alert('评论发布失败，请重试');
+        return;
+      }
+
+      document.getElementById('comment-content').value = '';
+      getComments();
+    });
+
+    getPostDetail();
+  </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>我的博客-关于我</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6',
+            dark: '#1E293B',
+          },
+        },
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-50">
+  <!-- 头部导航 -->
+  <header class="bg-dark text-white shadow-md">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">我的博客</h1>
+      <nav>
+        <a href="/index.html" class="mr-6"><i class="fa fa-home mr-1"></i>首页</a>
+        <a href="/blog.html" class="mr-6"><i class="fa fa-list mr-1"></i>所有文章</a>
+        <a href="/about.html" class="mr-6 text-primary border-b-2 border-primary"><i class="fa fa-user mr-1"></i>关于我</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 关于我内容 -->
+  <section class="py-12">
+    <div class="container mx-auto px-4">
+      <div id="author-info" class="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+        <!-- 作者信息由JS动态渲染 -->
+      </div>
+
+      <!-- 社交链接 -->
+      <div class="max-w-4xl mx-auto mt-8 bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-bold mb-4">关注我</h3>
+        <div class="flex space-x-4">
+          <a href="#" class="text-primary hover:text-primary/80 transition-colors"><i class="fa fa-github text-2xl"></i></a>
+          <a href="#" class="text-primary hover:text-primary/80 transition-colors"><i class="fa fa-twitter text-2xl"></i></a>
+          <a href="#" class="text-primary hover:text-primary/80 transition-colors"><i class="fa fa-linkedin text-2xl"></i></a>
+          <a href="#" class="text-primary hover:text-primary/80 transition-colors"><i class="fa fa-weixin text-2xl"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // 初始化Supabase
+    const supabase = supabase.createClient(
+      'https://yqqnvejkxaumpgfmbgvi.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxcW52ZWpreGF1bXBnZm1iZ3ZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3Mzk4NjcsImV4cCI6MjA3ODMxNTg2N30.3P4g-P1fVZlNL-yAd9zm7ogPiaiOAIHxTF-VStT8ZHk'
+    );
+
+    // 作者ID（已替换）
+    const authorId = 'df514ef3-d459-4d4e-9a66-2f3f8d5612a0';
+
+    // 获取作者信息
+    async function getAuthorInfo() {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authorId)
+        .single();
+
+      if (error) {
+        console.error('获取作者信息失败:', error);
+        return;
+      }
+
+      // 获取文章数
+      const { count: postCount } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('author_id', profile.id);
+
+      // 获取评论数
+      const { count: commentCount } = await supabase
+        .from('comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('author_id', profile.id);
+
+      document.getElementById('author-info').innerHTML = `
+        <div class="flex flex-col md:flex-row">
+          <div class="md:w-1/3 p-6">
+            <img src="${profile.avatar_url || 'https://picsum.photos/400/400'}" class="w-48 h-48 rounded-full mx-auto object-cover">
+          </div>
+          <div class="md:w-2/3 p-6">
+            <h2 class="text-3xl font-bold mb-4">${profile.username}</h2>
+            <p class="text-gray-600 mb-6">${profile.bio || '一名热爱技术的开发者，热衷于分享编程知识与成长经验。'}</p>
+            <div class="grid grid-cols-3 gap-4 mb-6">
+              <div class="text-center">
+                <p class="text-2xl font-bold">${postCount || 0}</p>
+                <p class="text-gray-600">文章</p>
+              </div>
+              <div class="text-center">
+                <p class="text-2xl font-bold">${commentCount || 0}</p>
+                <p class="text-gray-600">评论</p>
+              </div>
+              <div class="text-center">
+                <p class="text-2xl font-bold">${new Date(profile.created_at).getFullYear()}</p>
+                <p class="text-gray-600">创作年限</p>
+              </div>
+            </div>
+            <p class="text-lg font-medium">个人宣言</p>
+            <p class="text-gray-600 italic">"持续学习，不断成长，用技术改变世界。"</p>
+          </div>
+        </div>
+      `;
+    }
+
+    getAuthorInfo();
+  </script>
+</body>
+</html>

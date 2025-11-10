@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>我的博客-所有文章</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6',
+            dark: '#1E293B',
+          },
+        },
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .blog-card {
+        @apply bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- 头部导航 -->
+  <header class="bg-dark text-white shadow-md">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">我的博客</h1>
+      <nav>
+        <a href="/index.html" class="mr-6"><i class="fa fa-home mr-1"></i>首页</a>
+        <a href="/blog.html" class="mr-6 text-primary border-b-2 border-primary"><i class="fa fa-list mr-1"></i>所有文章</a>
+        <a href="/about.html" class="mr-6"><i class="fa fa-user mr-1"></i>关于我</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 文章列表 -->
+  <section class="py-12">
+    <div class="container mx-auto px-4">
+      <h2 class="text-2xl font-bold mb-8 text-center">文章列表</h2>
+      <div id="posts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- 文章卡片由JS动态渲染 -->
+      </div>
+      <div id="pagination" class="mt-8 flex justify-center">
+        <!-- 分页按钮由JS动态渲染 -->
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // 初始化Supabase
+    const supabase = supabase.createClient(
+      'https://yqqnvejkxaumpgfmbgvi.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxcW52ZWpreGF1bXBnZm1iZ3ZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3Mzk4NjcsImV4cCI6MjA3ODMxNTg2N30.3P4g-P1fVZlNL-yAd9zm7ogPiaiOAIHxTF-VStT8ZHk'
+    );
+
+    // 作者ID（已替换）
+    const authorId = 'df514ef3-d459-4d4e-9a66-2f3f8d5612a0';
+    let currentPage = 1;
+    const postsPerPage = 6;
+
+    // 获取文章列表
+    async function getPosts(page) {
+      const { data, count, error } = await supabase
+        .from('posts')
+        .select('id, title, cover_image, updated_at, author_id, profiles(username)', { count: 'exact' })
+        .order('updated_at', { ascending: false })
+        .eq('author_id', authorId)
+        .range((page - 1) * postsPerPage, page * postsPerPage - 1);
+
+      if (error) {
+        console.error('获取文章失败:', error);
+        return;
+      }
+
+      const postsContainer = document.getElementById('posts-list');
+      postsContainer.innerHTML = data.map(post => `
+        <div class="blog-card">
+          <img src="${post.cover_image || 'https://picsum.photos/600/400'}" class="w-full h-48 object-cover rounded-t-lg">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-gray-600 text-sm">${new Date(post.updated_at).toLocaleDateString()}</span>
+              <span class="text-primary font-medium">${post.profiles.username}</span>
+            </div>
+            <h3 class="text-xl font-bold mb-3">${post.title}</h3>
+            <a href="/post.html?id=${post.id}" class="text-primary font-medium flex items-center">
+              阅读全文 <i class="fa fa-angle-right ml-2"></i>
+            </a>
+          </div>
+        </div>
+      `).join('');
+
+      // 渲染分页
+      const totalPages = Math.ceil(count / postsPerPage);
+      const pagination = document.getElementById('pagination');
+      pagination.innerHTML = `
+        <nav class="inline-flex rounded-md shadow" aria-label="Pagination">
+          <a href="#" ${currentPage === 1 ? 'class="opacity-50 cursor-not-allowed"' : ''} 
+             onclick="if (currentPage > 1) { currentPage--; getPosts(currentPage); }"
+             class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+            <span class="sr-only">上一页</span>
+            <i class="fa fa-angle-left"></i>
+          </a>
+          ${Array.from({ length: totalPages }).map((_, i) => `
+            <a href="#" 
+               class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-${currentPage === i + 1 ? 'primary text-white' : 'white text-gray-700'} hover:bg-gray-50 text-sm font-medium">
+              ${i + 1}
+            </a>
+          `).join('')}
+          <a href="#" ${currentPage === totalPages ? 'class="opacity-50 cursor-not-allowed"' : ''} 
+             onclick="if (currentPage < ${totalPages}) { currentPage++; getPosts(currentPage); }"
+             class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+            <span class="sr-only">下一页</span>
+            <i class="fa fa-angle-right"></i>
+          </a>
+        </nav>
+      `;
+    }
+
+    getPosts(currentPage);
+  </script>
+</body>
+</html>
